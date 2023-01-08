@@ -95,4 +95,47 @@ router.get("/verify", authorization, async (req, res) => {
   }
 });
 
+//doctor register
+
+router.post("/docRegister", validInfo, async (req, res) => {
+  try {
+    //1. destructure the req.body (name, email, password)
+
+    const { name, email, password } = req.body;
+
+    //2. check if user exist (if user exist then throw error)
+
+    const user = await db.query("SELECT * FROM users WHERE user_email = $1", [
+      email,
+    ]);
+
+    if (user.rows.length !== 0) {
+      return res.status(401).json("User already exist");
+    }
+
+    //3. Bcrypt the user password
+
+    const saltRounds = 10;
+    const salt = await bcrypt.genSalt(saltRounds);
+
+    const bcryptPassword = await bcrypt.hash(password, salt);
+
+    //4. Enter the user inside our database
+
+    const newUser = await db.query(
+      "INSERT INTO users (user_name, user_email, user_password, user_role) VALUES ($1, $2, $3, $4) RETURNING *",
+      [name, email, bcryptPassword, "DOCTOR"]
+    );
+
+    //5. generating jwt token
+
+    const token = jwtGenerator(newUser.rows[0].user_id);
+
+    res.json({ token });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;

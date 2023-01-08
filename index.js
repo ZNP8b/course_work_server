@@ -19,6 +19,12 @@ app.use("/auth", require("./routes/jwtAuth"));
 
 app.use("/dashboard", require("./routes/dashboard"));
 
+app.use("/adminpanel", require("./routes/adminpanel"));
+
+app.use("/requests", require("./routes/requests"));
+
+app.use("/diagnoses", require("./routes/diagnoses"));
+
 app.listen(PORT, () => {
   console.log("Server started on port: ", PORT);
 });
