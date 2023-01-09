@@ -127,6 +127,16 @@ router.post("/docRegister", validInfo, async (req, res) => {
       [name, email, bcryptPassword, "DOCTOR"]
     );
 
+    //Add into schedule table
+    const newUserId = await db.query(
+      "SELECT user_id FROM users WHERE user_email = $1",
+      [email]
+    );
+
+    await db.query("INSERT INTO schedule (doctor_id) VALUES ($1)", [
+      newUserId.rows[0].user_id,
+    ]);
+
     //5. generating jwt token
 
     const token = jwtGenerator(newUser.rows[0].user_id);

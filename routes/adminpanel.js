@@ -50,6 +50,20 @@ router.delete("/doctors/:id", authorization, adminCheck, async (req, res) => {
       [id]
     );
 
+    const DoctorsRequests = await db.query(
+      "SELECT request_id FROM requests WHERE doctor_id = $1",
+      [id]
+    );
+
+    for (let i = 0; i < DoctorsRequests.rows.length; i++) {
+      await db.query("DELETE FROM diagnoses WHERE request_id = $1", [
+        DoctorsRequests.rows[i].request_id,
+      ]);
+    }
+
+    await db.query("DELETE FROM schedule WHERE doctor_id = $1", [id]);
+    await db.query("DELETE FROM requests WHERE doctor_id = $1", [id]);
+
     res.json(user.rows[0]);
   } catch (err) {
     console.log(err.message);
