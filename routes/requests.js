@@ -74,8 +74,16 @@ router.delete("/delete/:id", authorization, async (req, res) => {
 
 router.get("/doctorGet", authorization, doctorCheck, async (req, res) => {
   try {
+    const pagesize = req.query.pagesize || 3;
+      const page = (req.query.page - 1) * pagesize || 0;
+      let search = "%";
+      if (req.query.search) {
+        search = req.query.search + "%";
+      }
+
     const getRequests = await db.query(
-      "SELECT requests.request_id, requests.user_id, requests.doctor_id, users.user_name, requests.request_title, requests.request_description, requests.doctor_message FROM (requests JOIN users ON requests.user_id = users.user_id) ORDER BY requests.doctor_id DESC limit 6"
+      "SELECT requests.request_id, requests.user_id, requests.doctor_id, users.user_name, requests.request_title, requests.request_description, requests.doctor_message FROM (requests JOIN users ON requests.user_id = users.user_id) WHERE requests.doctor_id IS NULL AND users.user_name ilike $1 limit $2 offset $3",
+      [search, pagesize, page]
     );
 
     res.json(getRequests.rows);
@@ -144,6 +152,43 @@ router.get(
       );
 
       res.json(getSignedDoctorRequests.rows);
+    } catch (err) {
+      console.log(err.message);
+      res.status(500).send("Server error");
+    }
+  }
+);
+
+router.get(
+  "/getSignedDoctorRequestsCount",
+  authorization,
+  doctorCheck,
+  async (req, res) => {
+    try {
+      const getCountOfSignedDoctorRequests = await db.query(
+        "SELECT COUNT(request_id) FROM requests WHERE doctor_id = $1",
+        [req.user]
+      );
+
+      res.json(getCountOfSignedDoctorRequests.rows);
+    } catch (err) {
+      console.log(err.message);
+      res.status(500).send("Server error");
+    }
+  }
+);
+
+router.get(
+  "/getDoctorRequestsCount",
+  authorization,
+  doctorCheck,
+  async (req, res) => {
+    try {
+      const getCountOfDoctorRequests = await db.query(
+        "SELECT COUNT(request_id) FROM requests WHERE doctor_id IS NULL",
+      );
+
+      res.json(getCountOfDoctorRequests.rows);
     } catch (err) {
       console.log(err.message);
       res.status(500).send("Server error");

@@ -27,6 +27,8 @@ app.use("/diagnoses", require("./routes/diagnoses"));
 
 app.use("/schedule", require("./routes/schedule"));
 
+app.use("/statistics", require("./routes/statisitcs"));
+
 app.listen(PORT, () => {
   console.log("Server started on port: ", PORT);
 });

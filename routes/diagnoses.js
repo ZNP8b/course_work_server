@@ -63,20 +63,28 @@ router.get("/get", authorization, async (req, res) => {
 });
 
 router.get("/getDiagnose/:id", authorization, doctorCheck, async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-      const diagnose = await db.query(
-        "SELECT diagnoses.request_id, diagnoses.request_diagnose, diagnoses.diagnose_message FROM diagnoses JOIN requests ON diagnoses.request_id = requests.request_id JOIN users ON requests.doctor_id = users.user_id WHERE diagnoses.request_id = $1",
-        [id]
-      );
-  
-      res.json(diagnose.rows);
-    } catch (err) {
-      console.log(err.message);
-      res.status(500).json("Server error");
+    const diagnose = await db.query(
+      "SELECT diagnoses.request_id, diagnoses.request_diagnose, diagnoses.diagnose_message FROM diagnoses JOIN requests ON diagnoses.request_id = requests.request_id JOIN users ON requests.doctor_id = users.user_id WHERE diagnoses.request_id = $1",
+      [id]
+    );
+
+    if (diagnose.rowCount) {
+      res.json(diagnose.rows[0]);
+    } else {
+      res.json({
+        ["request_id"]: id,
+        ["request_diagnose"]: "",
+        ["diagnose_message"]: "",
+      });
     }
-  });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json("Server error");
+  }
+});
 
 router.delete("/delete/:id", authorization, doctorCheck, async (req, res) => {
   try {
